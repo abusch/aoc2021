@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{bail, Context, Result};
 
 pub fn run() -> Result<()> {
     let data = std::fs::read_to_string("inputs/day2.txt")?;
@@ -37,11 +37,8 @@ impl FromStr for Move {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut split = s.split_ascii_whitespace();
-        let m = split.next().ok_or_else(|| anyhow!("invalid input"))?;
-        let n = split
-            .next()
-            .ok_or_else(|| anyhow::anyhow!("Invalid input"))?
-            .parse::<i64>()?;
+        let m = split.next().context("invalid input")?;
+        let n = split.next().context("Invalid input")?.parse::<i64>()?;
 
         let res = match m {
             "forward" => Move::Forward(n),

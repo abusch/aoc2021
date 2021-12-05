@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use std::str::FromStr;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Context, Result};
 
 #[derive(Debug, Default)]
 struct Bingo {
@@ -15,7 +15,7 @@ impl Bingo {
         let mut lines = data.lines();
 
         // parse first line of drawn numbers
-        let numbers = lines.next().ok_or_else(|| anyhow!("Invalid data"))?;
+        let numbers = lines.next().context("Invalid input data")?;
         let numbers = numbers
             .split(',')
             .map(u64::from_str)

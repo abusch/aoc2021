@@ -1,6 +1,6 @@
-use std::str::FromStr;
+use std::{iter, str::FromStr};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use regex::Captures;
 
 pub fn run() -> Result<()> {
@@ -32,7 +32,7 @@ struct Floor {
 impl Floor {
     fn new(width: usize, height: usize) -> Self {
         Self {
-            grid: Vec::from_iter(std::iter::repeat(0).take(width * height)),
+            grid: iter::repeat(0).take(width * height).collect(),
             width,
             height,
         }
@@ -118,7 +118,7 @@ fn parse_data(content: &str) -> Result<Vec<Line>> {
     let mut positions = vec![];
     for line in content.lines() {
         let re = regex::Regex::new(r"^(\d+),(\d+) -> (\d+),(\d+)$")?;
-        let cap = re.captures(line).unwrap();
+        let cap = re.captures(line).context("Failed to parse line")?;
         let x1 = get_capture(&cap, 1)?;
         let y1 = get_capture(&cap, 2)?;
         let x2 = get_capture(&cap, 3)?;
@@ -131,8 +131,8 @@ fn parse_data(content: &str) -> Result<Vec<Line>> {
 
 fn get_capture(cap: &Captures, i: usize) -> Result<usize> {
     cap.get(i)
-        .ok_or_else(|| anyhow::anyhow!("No capture group!"))
-        .and_then(|s| usize::from_str(s.as_str()).map_err(|e| e.into()))
+        .context("no capture group found")
+        .and_then(|s| usize::from_str(s.as_str()).context("Failed to parse number"))
 }
 
 #[cfg(test)]

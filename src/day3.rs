@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 pub fn run() -> Result<()> {
     let data = std::fs::read_to_string("inputs/day3.txt")?;
@@ -12,11 +12,11 @@ pub fn run() -> Result<()> {
         count.most_common(),
         count.least_common()
     );
-    let res = count.gamma() * count.epsilon();
+    let res = count.gamma()? * count.epsilon()?;
     println!(
         "day3 part1 = {} * {} = {}",
-        count.gamma(),
-        count.epsilon(),
+        count.gamma()?,
+        count.epsilon()?,
         res
     );
 
@@ -57,12 +57,12 @@ impl<const N: usize> BitCounter<N> {
         self.n += 1;
     }
 
-    fn gamma(&self) -> u64 {
-        u64::from_str_radix(&self.most_common(), 2).unwrap()
+    fn gamma(&self) -> Result<u64> {
+        u64::from_str_radix(&self.most_common(), 2).context("Failed to parse binary number")
     }
 
-    fn epsilon(&self) -> u64 {
-        u64::from_str_radix(&self.least_common(), 2).unwrap()
+    fn epsilon(&self) -> Result<u64> {
+        u64::from_str_radix(&self.least_common(), 2).context("Failed to parse binay number")
     }
 
     fn most_common(&self) -> String {
@@ -105,7 +105,7 @@ fn filter_nums<F: Fn(&BitCounter<N>) -> String, const N: usize>(nums: Vec<&str>,
         }
     }
     let o2_rating = remaining.first().unwrap();
-    u64::from_str_radix(&o2_rating, 2).unwrap()
+    u64::from_str_radix(o2_rating, 2).unwrap()
 }
 
 #[cfg(test)]
@@ -113,7 +113,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_bit_counter() {
+    fn test_bit_counter() -> Result<()> {
         let data = r#"00100
 11110
 10110
@@ -130,13 +130,14 @@ mod tests {
         let lines = data.lines().collect::<Vec<_>>();
         let count = BitCounter::<5>::from_list(&lines);
         println!("{}, {}", count.most_common(), count.least_common());
-        println!("{}, {}", count.gamma(), count.epsilon());
-        assert_eq!(198, count.gamma() * count.epsilon());
+        println!("{}, {}", count.gamma()?, count.epsilon()?);
+        assert_eq!(198, count.gamma()? * count.epsilon()?);
 
         let o2_rating = filter_nums(lines.clone(), BitCounter::<5>::most_common);
         assert_eq!(23, o2_rating);
         let co2_rating = filter_nums(lines.clone(), BitCounter::<5>::least_common);
         assert_eq!(10, co2_rating);
         assert_eq!(230, o2_rating * co2_rating);
+        Ok(())
     }
 }
