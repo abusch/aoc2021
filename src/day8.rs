@@ -27,9 +27,7 @@ impl FromStr for Digit {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut digit = Digit::empty();
-
-        for c in s.chars() {
+        s.chars().try_fold(Digit::empty(), |mut d, c| {
             let segment = match c {
                 'a' => Digit::A,
                 'b' => Digit::B,
@@ -40,9 +38,9 @@ impl FromStr for Digit {
                 'g' => Digit::G,
                 _ => bail!("bad segment"),
             };
-            digit |= segment;
-        }
-        Ok(digit)
+            d |= segment;
+            Ok(d)
+        })
     }
 }
 
@@ -52,6 +50,7 @@ struct Entry {
 }
 
 impl Entry {
+    /// Return the number of digits in this entry's displayed value that are either 1, 4, 7 or 8
     fn contains_1478(&self) -> usize {
         // Get the patterns that correspond to the digits 1, 4, 7 or 8 (based on the number of
         // segments)
@@ -70,6 +69,7 @@ impl Entry {
             .count()
     }
 
+    // Return the value displayed in this entry
     fn display_value(&self) -> Result<u32> {
         let map = self.map_digits()?;
 
@@ -84,6 +84,7 @@ impl Entry {
         Ok(res)
     }
 
+    /// Figure out the mapping of each pattern to its corresponding digit
     fn map_digits(&self) -> Result<HashMap<Digit, u32>> {
         let mut map = HashMap::new();
         // Get easy digits
@@ -92,14 +93,14 @@ impl Entry {
         let d7 = self.get_pattern_with_n_segments(3)?;
         let d8 = self.get_pattern_with_n_segments(7)?;
 
-        // Get the digits with 5 segments
+        // Get the digits with 6 segments: can be 0, 6 or 9
         let d6s = self.get_patterns_with_n_segments(6);
         let mut d0 = Digit::empty();
         let mut d6 = Digit::empty();
         let mut d9 = Digit::empty();
         for d in d6s {
             if d & d1 != d1 {
-                // if it does not "contains" the segments of "1", then it has to be 6
+                // if it does not "contain" the segments of "1", then it has to be 6
                 d6 = d;
             } else if d & d4 == d4 {
                 // if it "contains" the segments of "4", then it has to be 9
@@ -110,7 +111,7 @@ impl Entry {
             }
         }
 
-        // Get the digits with 5 segments
+        // Get the digits with 5 segments, can be 2, 3 or 5
         let d5s = self.get_patterns_with_n_segments(5);
         let mut d2 = Digit::empty();
         let mut d3 = Digit::empty();
@@ -169,12 +170,12 @@ impl FromStr for Entry {
         let pattern_digits = patterns
             .trim()
             .split_whitespace()
-            .map(|f| Digit::from_str(f))
+            .map(Digit::from_str)
             .collect::<Result<Vec<_>>>()?;
         let display_digits = digits
             .trim()
             .split_whitespace()
-            .map(|f| Digit::from_str(f))
+            .map(Digit::from_str)
             .collect::<Result<Vec<_>>>()?;
 
         let mut pattern_digits_arr = [Digit::empty(); 10];
@@ -204,7 +205,7 @@ pub fn run() -> Result<()> {
         .iter()
         .map(Entry::display_value)
         .collect::<Result<Vec<_>>>()?;
-    let sum: u64 = values.iter().map(|v| *v as u64).sum();
+    let sum = values.iter().sum::<u32>();
     println!("day8 part2 = {}", sum);
 
     Ok(())

@@ -54,7 +54,6 @@ pub fn run() -> Result<()> {
     let pos = crabs.cheapest_position2();
     println!("day7 part2 = {}", pos);
 
-
     Ok(())
 }
 
