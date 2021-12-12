@@ -151,7 +151,7 @@ mod tests {
 3,4 -> 1,4
 0,0 -> 8,8
 5,5 -> 8,2";
-        let data = parse_data(&content).unwrap();
+        let data = parse_data(content).unwrap();
 
         let mut floor = Floor::new(10, 10);
         for line in data.iter().filter(|l| l.is_horizontal_or_vertical()) {
