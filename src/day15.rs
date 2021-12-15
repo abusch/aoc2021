@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::BinaryHeap;
 
 use anyhow::Result;
 
@@ -39,55 +39,56 @@ impl Dijsktra {
         self.size * self.ntiles
     }
 
-    fn run(&self) -> u64 {
-        let mut distances = vec![vec![u64::MAX; self.map_size()]; self.map_size()];
+    fn run(&self) -> i64 {
+        // Our goal
+        let end = (self.map_size() - 1, self.map_size() - 1);
+        // Contains distances from the start node to each node
+        let mut distances = vec![vec![i64::MAX; self.map_size()]; self.map_size()];
         distances[0][0] = 0;
-        let mut unvisited = HashSet::new();
-        for j in 0..self.map_size() {
-            for i in 0..self.map_size() {
-                unvisited.insert((i, j));
-            }
-        }
 
-        let mut current_node = (0, 0);
-        loop {
-            let (i, j) = current_node;
+        // the nodes to process, ordered by distance to the start
+        let mut q = BinaryHeap::new();
+        // Initialise the priority queue with the start node
+        q.push((0, 0, 0));
+
+        while let Some((r, i, j)) = q.pop() {
+            // let (i, j) = current_node;
             let d = distances[i][j];
+            if d != -r {
+                // If the distance has been updated since we put the node in the queue, just ignore
+                // it
+                continue;
+            }
             for (n, m) in self.neighbours(i, j) {
-                if unvisited.contains(&(n, m)) {
-                    let new_d = d + self.get_cost(n, m) as u64;
-                    if distances[n][m] > new_d {
-                        distances[n][m] = new_d;
-                    }
+                let new_d = d + self.get_cost(n, m);
+                if new_d < distances[n][m] {
+                    distances[n][m] = new_d;
+                    q.push((-new_d, n, m));
                 }
             }
-            unvisited.remove(&(i, j));
-            if current_node == (self.map_size() - 1, self.map_size() - 1) {
-                break;
-            } else if let Some(pos) = unvisited
-                .iter()
-                .min_by(|p1, p2| distances[p1.0][p1.1].cmp(&distances[p2.0][p2.1]))
-            {
-                current_node = *pos;
-            } else {
+            // Stop when we've reached the end
+            if (i, j) == end {
                 break;
             }
         }
-        distances[self.map_size() - 1][self.map_size() - 1]
+
+        // Return the distance from start to the end node
+        distances[end.0][end.1]
     }
 
-    fn get_cost(&self, i: usize, j: usize) -> u8 {
+    fn get_cost(&self, i: usize, j: usize) -> i64 {
         let n = i % self.size;
         let m = j % self.size;
         let tile_x = (i / self.size) as u8;
         let tile_y = (j / self.size) as u8;
         let cost = self.costs[n + m * self.size] + tile_x + tile_y;
         if cost > 9 {
-            cost - 9
+            cost as i64 - 9
         } else {
-            cost
+            cost as i64
         }
     }
+
     fn neighbours(&self, i: usize, j: usize) -> Vec<(usize, usize)> {
         let mut neigh = Vec::with_capacity(4);
         if i > 0 {
