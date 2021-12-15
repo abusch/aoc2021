@@ -12,3 +12,6 @@ internment = "0.5"
 itertools = "0.10"
 petgraph = "0.6"
 regex = "1.5"
+
+[profile.release]
+debug = true
