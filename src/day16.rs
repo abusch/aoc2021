@@ -130,27 +130,9 @@ impl Packet {
                 1 => packets.iter().map(|p| p.eval()).product(),
                 2 => packets.iter().map(|p| p.eval()).min().unwrap(),
                 3 => packets.iter().map(|p| p.eval()).max().unwrap(),
-                5 => {
-                    if packets[0].eval() > packets[1].eval() {
-                        1
-                    } else {
-                        0
-                    }
-                }
-                6 => {
-                    if packets[0].eval() < packets[1].eval() {
-                        1
-                    } else {
-                        0
-                    }
-                }
-                7 => {
-                    if packets[0].eval() == packets[1].eval() {
-                        1
-                    } else {
-                        0
-                    }
-                }
+                5 => (packets[0].eval() > packets[1].eval()) as u64,
+                6 => (packets[0].eval() < packets[1].eval()) as u64,
+                7 => (packets[0].eval() == packets[1].eval()) as u64,
                 _ => panic!("Unknown op code"),
             },
         }
