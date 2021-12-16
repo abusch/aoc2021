@@ -8,9 +8,12 @@ pub fn run() -> Result<()> {
 
     let mut bv = parse_hex_data(&content)?;
     let packet = parse_packet(&mut bv);
-    let sum = packet.version_sum();
 
+    let sum = packet.version_sum();
     println!("day16 part1 = {}", sum);
+
+    let eval = packet.eval();
+    println!("day16 part2 = {}", eval);
     Ok(())
 }
 
@@ -116,6 +119,24 @@ impl Packet {
                 let sum: u64 = packets.iter().map(|p| p.version_sum()).sum();
                 self.header.version as u64 + sum
             }
+        }
+    }
+
+    fn eval(&self) -> u64 {
+        match self.data {
+            PacketData::Literal(n) => n,
+            PacketData::Operator(ref packets) => {
+                match self.header.type_id {
+                    0 => {packets.iter().map(|p| p.eval()).sum()},
+                    1 => {packets.iter().map(|p| p.eval()).product()},
+                    2 => {packets.iter().map(|p| p.eval()).min().unwrap()},
+                    3 => {packets.iter().map(|p| p.eval()).max().unwrap()},
+                    5 => {if packets[0].eval() > packets[1].eval() { 1 } else {0}},
+                    6 => {if packets[0].eval() < packets[1].eval() { 1 } else {0}},
+                    7 => {if packets[0].eval() == packets[1].eval() { 1 } else {0}},
+                    _ => panic!("Unknown op code"),
+                }
+            },
         }
     }
 }
