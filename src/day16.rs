@@ -27,7 +27,7 @@ fn parse_hex_data(data: &str) -> Result<BitBuffer> {
         })
         .collect::<Result<Vec<_>>>()?;
     let bv = BitVec::<Msb0, _>::from_slice(&bytes).context("Failed to build BitVec")?;
-    
+
     Ok(BitBuffer(bv))
 }
 
@@ -40,7 +40,7 @@ fn parse_header(data: &mut BitBuffer) -> Header {
 }
 
 fn parse_packet(data: &mut BitBuffer) -> Packet {
-    let header  = parse_header(data);
+    let header = parse_header(data);
 
     let payload = match header.type_id {
         4 => {
@@ -74,10 +74,10 @@ fn parse_packet(data: &mut BitBuffer) -> Packet {
         }
     };
 
-        Packet {
-            header,
-            data: payload,
-        }
+    Packet {
+        header,
+        data: payload,
+    }
 }
 
 fn parse_packets(data: &mut BitBuffer) -> Vec<Packet> {
@@ -125,17 +125,33 @@ impl Packet {
     fn eval(&self) -> u64 {
         match self.data {
             PacketData::Literal(n) => n,
-            PacketData::Operator(ref packets) => {
-                match self.header.type_id {
-                    0 => {packets.iter().map(|p| p.eval()).sum()},
-                    1 => {packets.iter().map(|p| p.eval()).product()},
-                    2 => {packets.iter().map(|p| p.eval()).min().unwrap()},
-                    3 => {packets.iter().map(|p| p.eval()).max().unwrap()},
-                    5 => {if packets[0].eval() > packets[1].eval() { 1 } else {0}},
-                    6 => {if packets[0].eval() < packets[1].eval() { 1 } else {0}},
-                    7 => {if packets[0].eval() == packets[1].eval() { 1 } else {0}},
-                    _ => panic!("Unknown op code"),
+            PacketData::Operator(ref packets) => match self.header.type_id {
+                0 => packets.iter().map(|p| p.eval()).sum(),
+                1 => packets.iter().map(|p| p.eval()).product(),
+                2 => packets.iter().map(|p| p.eval()).min().unwrap(),
+                3 => packets.iter().map(|p| p.eval()).max().unwrap(),
+                5 => {
+                    if packets[0].eval() > packets[1].eval() {
+                        1
+                    } else {
+                        0
+                    }
                 }
+                6 => {
+                    if packets[0].eval() < packets[1].eval() {
+                        1
+                    } else {
+                        0
+                    }
+                }
+                7 => {
+                    if packets[0].eval() == packets[1].eval() {
+                        1
+                    } else {
+                        0
+                    }
+                }
+                _ => panic!("Unknown op code"),
             },
         }
     }
@@ -147,7 +163,7 @@ enum PacketData {
     Operator(Vec<Packet>),
 }
 
-struct BitBuffer (BitVec<Msb0, u8>);
+struct BitBuffer(BitVec<Msb0, u8>);
 
 impl BitBuffer {
     fn take(&mut self, count: usize) -> BitBuffer {

@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 
+#[allow(dead_code)]
 pub fn run() -> Result<()> {
     let content = std::fs::read_to_string("inputs/day14.txt")?;
     let polymer = Polymer::parse(&content)?;
@@ -50,7 +51,7 @@ impl Counters {
     fn get_count(&self, c: u8) -> u64 {
         self.0[(c - b'A') as usize]
     }
-    
+
     fn min(&self) -> u64 {
         self.0.iter().filter(|&c| *c != 0).min().copied().unwrap()
     }
@@ -97,7 +98,6 @@ impl Polymer {
         // let new_char = self.rules.get(&(first, second)).copied().unwrap();
         // let mut stack = Vec::with_capacity(steps);
 
-        
         let new_char = self.rules.get(first, second);
         self.expand_and_count(counters, first, new_char, steps - 1);
         self.expand_and_count(counters, new_char, second, steps - 1);
